@@ -29,7 +29,8 @@ Page({
       temperatureMin: 15,
       temperatureMax: 28,
       material: '',
-      fit: 'regular'
+      fit: 'regular',
+      aiConfidence: 0.6
     },
 
     categories: [
@@ -59,9 +60,13 @@ Page({
     try {
       this.setData({ loading: true })
 
-      const userId = wardrobeService.getUserId()
+      let userId = wardrobeService.getUserId()
       const result = await wardrobeService.getWardrobes()
       const currentWardrobe = result.currentWardrobe
+      if (!userId && currentWardrobe && currentWardrobe.userId) {
+        userId = currentWardrobe.userId
+        wx.setStorageSync('userId', userId)
+      }
 
       if (!userId || !currentWardrobe || !currentWardrobe._id) {
         wx.showModal({
@@ -83,10 +88,6 @@ Page({
         userId,
         currentWardrobe,
         currentWardrobeId: currentWardrobe._id
-      })
-
-      wx.setNavigationBarTitle({
-        title: `添加到${currentWardrobe.name}`
       })
     } catch (err) {
       wx.showToast({
@@ -126,13 +127,19 @@ Page({
         filePath: tempFilePath
       })
 
+      const fileID = uploadRes.fileID
+
+      if (!fileID) {
+        throw new Error('图片上传失败，未获取到云存储地址')
+      }
+
       this.setData({
-        imageUrl: uploadRes.fileID
+        imageUrl: fileID
       })
 
       wx.hideLoading()
 
-      await this.recognizeClothing(uploadRes.fileID)
+      await this.recognizeImage(fileID)
     } catch (err) {
       wx.hideLoading()
       wx.showToast({
@@ -142,38 +149,41 @@ Page({
     }
   },
 
-  async recognizeClothing(imageUrl) {
+  async recognizeImage(imageUrl) {
     try {
+      if (!imageUrl) {
+        throw new Error('图片缺少地址，无法识别')
+      }
+
+      console.log('识别图片地址：', imageUrl)
+
       this.setData({ recognizing: true })
 
-      let result = null
+      const result = await aiService.recognizeClothing({
+        imageUrl,
+        sourceType: 'image'
+      })
 
-      if (aiService && typeof aiService.recognizeClothing === 'function') {
-        result = await aiService.recognizeClothing(imageUrl)
-      }
-
-      const mockResult = result || {
-        name: '待确认衣物',
-        category: 'top',
-        subCategory: '',
-        color: 'white',
-        colorName: '白色',
-        thickness: 'medium',
-        warmLevel: 3,
-        season: ['spring', 'summer'],
-        styleTags: ['casual'],
-        sceneTags: ['daily'],
-        temperatureMin: 15,
-        temperatureMax: 28,
-        material: '',
-        fit: 'regular',
-        aiConfidence: 0.6
-      }
+      const recognizeResult = result || {}
 
       this.setData({
         form: {
           ...this.data.form,
-          ...mockResult
+          name: recognizeResult.name || '待确认衣物',
+          category: recognizeResult.category || 'top',
+          subCategory: recognizeResult.subCategory || '',
+          color: recognizeResult.color || '',
+          colorName: recognizeResult.colorName || recognizeResult.color || '',
+          thickness: recognizeResult.thickness || 'medium',
+          warmLevel: recognizeResult.warmLevel || 3,
+          season: recognizeResult.season || ['spring', 'summer'],
+          styleTags: recognizeResult.styleTags || ['casual'],
+          sceneTags: recognizeResult.sceneTags || ['daily'],
+          temperatureMin: recognizeResult.temperatureMin || 15,
+          temperatureMax: recognizeResult.temperatureMax || 28,
+          material: recognizeResult.material || '',
+          fit: recognizeResult.fit || 'regular',
+          aiConfidence: recognizeResult.aiConfidence || 0.6
         }
       })
 
@@ -205,7 +215,8 @@ Page({
 
   onInputColor(e) {
     this.setData({
-      'form.colorName': e.detail.value
+      'form.colorName': e.detail.value,
+      'form.color': e.detail.value
     })
   },
 
@@ -250,7 +261,12 @@ Page({
   },
 
   async saveClothing() {
-    const { userId, currentWardrobeId, imageUrl, form } = this.data
+    let { userId, currentWardrobe, currentWardrobeId, imageUrl, form } = this.data
+
+    if (!userId && currentWardrobe && currentWardrobe.userId) {
+      userId = currentWardrobe.userId
+      wx.setStorageSync('userId', userId)
+    }
 
     if (!userId) {
       wx.showToast({
@@ -326,7 +342,9 @@ Page({
         status: 'active'
       }
 
-      await clothingService.addClothing(clothingData)
+      await clothingService.addClothing({
+        clothingData
+      })
 
       wx.hideLoading()
 

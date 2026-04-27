@@ -6,7 +6,7 @@ function ensureSuccess(res, defaultMessage) {
     )
   }
 
-  return res.result
+  return res.result.data || res.result
 }
 
 function getCurrentUserId() {
@@ -14,7 +14,7 @@ function getCurrentUserId() {
 }
 
 function getCurrentWardrobeId() {
-  return wx.getStorageSync('wardrobeId') || ''
+  return wx.getStorageSync('currentWardrobeId') || wx.getStorageSync('wardrobeId') || ''
 }
 
 function getFileExt(filePath) {
@@ -45,7 +45,25 @@ async function uploadClothingImage(tempFilePath) {
   }
 }
 
-async function addClothing({ userId, wardrobeId, clothing }) {
+async function addClothing(payload) {
+  let userId = ''
+  let wardrobeId = ''
+  let clothing = null
+
+  // 兼容写法1：addClothing(clothingData)
+  if (payload && payload.name) {
+    userId = payload.userId || getCurrentUserId()
+    wardrobeId = payload.wardrobeId || getCurrentWardrobeId()
+    clothing = payload
+  }
+
+  // 兼容写法2：addClothing({ userId, wardrobeId, clothing })
+  if (payload && payload.clothing) {
+    userId = payload.userId || payload.clothing.userId || getCurrentUserId()
+    wardrobeId = payload.wardrobeId || payload.clothing.wardrobeId || getCurrentWardrobeId()
+    clothing = payload.clothing
+  }
+
   if (!userId) {
     throw new Error('缺少 userId，请先完成登录')
   }
@@ -67,7 +85,7 @@ async function addClothing({ userId, wardrobeId, clothing }) {
     }
   })
 
-  return ensureSuccess(res, '保存衣物失败').data
+  return ensureSuccess(res, '保存衣物失败')
 }
 
 async function listClothes(params = {}) {
@@ -95,10 +113,18 @@ async function listClothes(params = {}) {
   return ensureSuccess(res, '读取衣物失败')
 }
 
+async function getClothesByWardrobe(wardrobeId) {
+  return await listClothes({
+    wardrobeId,
+    category: 'all'
+  })
+}
+
 module.exports = {
   uploadClothingImage,
   addClothing,
   listClothes,
+  getClothesByWardrobe,
   getCurrentUserId,
   getCurrentWardrobeId
 }
