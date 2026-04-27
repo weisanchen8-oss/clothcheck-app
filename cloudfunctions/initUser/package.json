@@ -1,0 +1,9 @@
+{
+  "name": "init-user",
+  "version": "1.0.0",
+  "description": "初始化用户与默认衣柜",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

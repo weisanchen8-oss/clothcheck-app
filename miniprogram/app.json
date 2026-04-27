@@ -1,6 +1,10 @@
 {
   "pages": [
-    "pages/add-item/add-item"
+    "pages/home/home",
+    "pages/closet/closet",
+    "pages/add-item/add-item",
+    "pages/recommendation/recommendation",
+    "pages/profile/profile"
   ],
   "window": {
     "navigationBarTitleText": "智能衣橱",

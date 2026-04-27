@@ -1,14 +1,29 @@
-// app.js
+const userService = require('./services/userService')
+
 App({
-  onLaunch() {
-    // 1️⃣ 初始化云开发（必须）
+  globalData: {
+    initReady: false,
+    initError: ''
+  },
+
+  async onLaunch() {
     wx.cloud.init({
-      env: 'cloud1-d0g4518tl4ecde1f9', 
+      env: wx.cloud.DYNAMIC_CURRENT_ENV,
       traceUser: true
     })
 
-    // 2️⃣ 写入测试用户（必须）
-    wx.setStorageSync('userId', 'test_user_001')
-    wx.setStorageSync('wardrobeId', 'test_wardrobe_001')
+    try {
+      const initData = await userService.initUser()
+
+      this.globalData.initReady = true
+      this.globalData.initError = ''
+
+      console.log('[app] 用户初始化成功：', initData)
+    } catch (error) {
+      this.globalData.initReady = false
+      this.globalData.initError = error.message || '用户初始化失败'
+
+      console.error('[app] 用户初始化失败：', error)
+    }
   }
 })

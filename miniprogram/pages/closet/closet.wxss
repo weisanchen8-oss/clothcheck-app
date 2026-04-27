@@ -1,0 +1,157 @@
+.page {
+  min-height: 100vh;
+  background: #f7f8f5;
+  padding: 32rpx 24rpx 120rpx;
+  box-sizing: border-box;
+}
+
+.header {
+  margin-bottom: 28rpx;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #1f2a1f;
+}
+
+.subtitle {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  color: #7a8278;
+}
+
+.category-scroll {
+  white-space: nowrap;
+  margin-bottom: 28rpx;
+}
+
+.category-row {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+}
+
+.category-item {
+  display: inline-flex;
+  padding: 14rpx 28rpx;
+  border-radius: 999rpx;
+  background: #ffffff;
+  color: #596158;
+  font-size: 26rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+}
+
+.category-active {
+  background: #dfead7;
+  color: #25351f;
+  font-weight: 600;
+}
+
+.state-box {
+  margin-top: 120rpx;
+  text-align: center;
+  color: #7a8278;
+  font-size: 28rpx;
+}
+
+.error {
+  color: #c44;
+}
+
+.empty-box {
+  margin-top: 140rpx;
+  text-align: center;
+}
+
+.empty-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #293329;
+}
+
+.empty-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #8a9288;
+}
+
+.empty-button {
+  margin-top: 36rpx;
+  width: 280rpx;
+  border-radius: 999rpx;
+  background: #dfead7;
+  color: #25351f;
+  font-size: 28rpx;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24rpx;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 28rpx;
+  overflow: hidden;
+  box-shadow: 0 10rpx 28rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-image {
+  width: 100%;
+  height: 320rpx;
+  background: #eef0ec;
+}
+
+.card-body {
+  padding: 20rpx;
+}
+
+.card-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1f2a1f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-meta {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #7a8278;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-row {
+  margin-top: 16rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.tag {
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  background: #f1f4ef;
+  color: #667063;
+  font-size: 22rpx;
+}
+
+.float-button {
+  position: fixed;
+  right: 36rpx;
+  bottom: 60rpx;
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+  background: #9fbd8f;
+  color: #ffffff;
+  font-size: 64rpx;
+  line-height: 96rpx;
+  text-align: center;
+  box-shadow: 0 12rpx 30rpx rgba(80, 110, 65, 0.28);
+}
