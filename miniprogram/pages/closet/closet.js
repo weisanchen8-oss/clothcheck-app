@@ -7,6 +7,7 @@ Page({
 
     categories: [
       { label: '上衣', value: 'top' },
+      { label: '下装', value: 'bottom' },
       { label: '外套', value: 'outerwear' },
       { label: '裙装', value: 'dress' },
       { label: '鞋', value: 'shoes' },
@@ -46,10 +47,6 @@ Page({
         currentWardrobe,
         currentWardrobeId: currentWardrobe._id
       })
-      
-      wx.setNavigationBarTitle({
-        title: currentWardrobe.name || '我的衣橱'
-      })
 
       await this.loadClothes()
     } catch (err) {
@@ -69,7 +66,17 @@ Page({
       return
     }
 
-    const clothes = await clothingService.getClothesByWardrobe(wardrobeId)
+    const result = await clothingService.getClothesByWardrobe(wardrobeId)
+
+    let clothes = []
+
+    if (Array.isArray(result)) {
+      clothes = result
+    } else if (result && Array.isArray(result.clothes)) {
+      clothes = result.clothes
+    } else if (result && result.data && Array.isArray(result.data.clothes)) {
+      clothes = result.data.clothes
+    }
 
     this.setData({
       clothes
@@ -109,6 +116,12 @@ Page({
   goWardrobes() {
     wx.navigateTo({
       url: '/pages/wardrobes/wardrobes'
+    })
+  },
+
+  goRecommendation() {
+    wx.navigateTo({
+      url: '/pages/recommendation/recommendation'
     })
   },
 

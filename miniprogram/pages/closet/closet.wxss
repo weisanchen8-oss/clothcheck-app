@@ -188,3 +188,13 @@
   font-size: 54rpx;
   box-shadow: 0 10rpx 28rpx rgba(80, 120, 80, 0.3);
 }
+
+.recommend-btn {
+  margin-left: 16rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  border-radius: 999rpx;
+  background: #9abc8f;
+  color: #ffffff;
+  font-size: 24rpx;
+}

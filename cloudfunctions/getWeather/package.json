@@ -1,0 +1,9 @@
+{
+  "name": "getWeather",
+  "version": "1.0.0",
+  "description": "Get current weather for AI Wardrobe Agent",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -343,7 +343,9 @@ Page({
       }
 
       await clothingService.addClothing({
-        clothingData
+        userId,
+        wardrobeId: currentWardrobeId,
+        clothing: clothingData
       })
 
       wx.hideLoading()

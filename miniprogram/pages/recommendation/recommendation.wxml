@@ -1,2 +1,102 @@
-<!--pages/recommendation/recommendation.wxml-->
-<text>pages/recommendation/recommendation.wxml</text>
+<view class="page">
+  <view class="header">
+    <view class="title">今日穿搭推荐</view>
+    <view class="subtitle">根据真实天气和当前衣柜生成</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-card">
+    正在获取天气并生成推荐...
+  </view>
+
+  <view wx:if="{{!loading && weather}}" class="weather-card">
+    <view class="weather-main">
+      <view>
+        <view class="weather-city">{{weather.cityName}}</view>
+        <view class="weather-text">{{weather.weatherText}}</view>
+      </view>
+      <view class="weather-temp">{{weather.temperature}}℃</view>
+    </view>
+
+    <view class="weather-detail">
+      <text>最低 {{weather.tempMin}}℃</text>
+      <text>最高 {{weather.tempMax}}℃</text>
+      <text>湿度 {{weather.humidity}}%</text>
+    </view>
+
+    <view class="weather-source">
+      数据来源：{{weather.source}}
+    </view>
+  </view>
+
+  <view wx:if="{{!loading && errorMessage}}" class="error-card">
+    {{errorMessage}}
+  </view>
+
+  <view wx:if="{{!loading && outfits.length > 0}}" class="section">
+    <view class="section-title">推荐搭配</view>
+
+    <view
+      wx:for="{{outfits}}"
+      wx:key="title"
+      class="outfit-card"
+    >
+      <view class="outfit-title">{{item.title}}</view>
+
+      <view class="clothes-list">
+        <view
+          wx:for="{{item.items}}"
+          wx:for-item="clothing"
+          wx:key="_id"
+          class="clothing-item"
+        >
+          <image
+            wx:if="{{clothing.imageUrl}}"
+            class="clothing-image"
+            src="{{clothing.imageUrl}}"
+            mode="aspectFill"
+          />
+          <view class="clothing-info">
+            <view class="clothing-name">{{clothing.name}}</view>
+            <view class="clothing-meta">
+              {{clothing.category}} · {{clothing.colorName || clothing.color}}
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="reason">
+        {{item.reason}}
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{!loading && fallbackSuggestions.length > 0}}" class="section">
+    <view class="section-title">补充建议</view>
+
+    <view
+      wx:for="{{fallbackSuggestions}}"
+      wx:key="missingCategory"
+      class="suggestion-card"
+    >
+      <view class="suggestion-title">缺少：{{item.missingCategory}}</view>
+      <view class="suggestion-text">{{item.suggestion}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{!loading && outfits.length === 0}}" class="empty-card">
+    当前暂时没有生成完整搭配。
+    <view class="empty-tip">可以先去衣橱补充更多衣物。</view>
+  </view>
+
+  <view class="button-group">
+    <button class="primary-btn" bindtap="handleRefresh">
+      重新生成
+    </button>
+    <button class="secondary-btn" bindtap="goCloset">
+      去衣橱
+    </button>
+    <button class="secondary-btn" bindtap="goAddItem">
+      添加衣物
+    </button>
+  </view>
+</view>

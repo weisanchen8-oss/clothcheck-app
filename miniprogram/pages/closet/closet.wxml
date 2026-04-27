@@ -1,4 +1,5 @@
 <view class="page">
+  <!-- 顶部衣柜卡片 -->
   <view class="wardrobe-card">
     <view class="wardrobe-main">
       <view class="wardrobe-avatar">
@@ -6,16 +7,28 @@
       </view>
 
       <view class="wardrobe-text">
-        <view class="title">{{currentWardrobe.name || '我的衣橱'}}</view>
+        <view class="title">
+          {{currentWardrobe.name || '我的衣橱'}}
+        </view>
+
         <view class="subtitle">
-          {{currentWardrobe.type === 'pet' ? '宠物衣柜' : '日常衣柜'}} · 查看已录入衣物
+          {{currentWardrobe.type === 'pet' ? '宠物衣柜' : '日常衣柜'}} · 已录入衣物
         </view>
       </view>
 
-      <button class="switch-btn" bindtap="goWardrobes">切换</button>
+      <view class="header-actions">
+        <button class="recommend-btn" bindtap="goRecommendation">
+          推荐
+        </button>
+
+        <button class="switch-btn" bindtap="goWardrobes">
+          切换
+        </button>
+      </view>
     </view>
   </view>
 
+  <!-- 分类 -->
   <view class="section">
     <view class="section-title">衣物分类</view>
 
@@ -34,17 +47,29 @@
     </scroll-view>
   </view>
 
+  <!-- 加载状态 -->
   <view wx:if="{{loading}}" class="empty-card">
-    <view class="empty-title">正在加载衣物...</view>
+    <view class="empty-title">加载中...</view>
   </view>
 
+  <!-- 空状态 -->
   <view wx:elif="{{filteredClothes.length === 0}}" class="empty-card">
-    <view class="empty-icon">👚</view>
-    <view class="empty-title">{{currentWardrobe.name || '当前衣柜'}}暂无衣物</view>
-    <view class="empty-desc">可以先为这个衣柜添加一件衣物</view>
-    <button class="empty-btn" bindtap="goAddItem">添加衣物</button>
+    <view class="empty-icon">👕</view>
+
+    <view class="empty-title">
+      {{currentWardrobe.name || '当前衣柜'}}暂无衣物
+    </view>
+
+    <view class="empty-desc">
+      可以先添加几件衣物，系统才能为你推荐穿搭
+    </view>
+
+    <button class="empty-btn" bindtap="goAddItem">
+      添加衣物
+    </button>
   </view>
 
+  <!-- 衣物列表 -->
   <view wx:else class="clothes-grid">
     <view
       wx:for="{{filteredClothes}}"
@@ -53,13 +78,26 @@
       data-id="{{item._id}}"
       bindtap="onClothingTap"
     >
-      <image class="clothing-image" src="{{item.imageUrl}}" mode="aspectFill"></image>
+      <image
+        class="clothing-image"
+        src="{{item.imageUrl}}"
+        mode="aspectFill"
+      ></image>
+
       <view class="clothing-info">
-        <view class="clothing-name">{{item.name}}</view>
-        <view class="clothing-meta">{{item.colorName || item.color}} · {{item.thickness}}</view>
+        <view class="clothing-name">
+          {{item.name}}
+        </view>
+
+        <view class="clothing-meta">
+          {{item.colorName || item.color}} · {{item.thickness}}
+        </view>
       </view>
     </view>
   </view>
 
-  <button class="float-add-btn" bindtap="goAddItem">+</button>
+  <!-- 悬浮添加按钮 -->
+  <button class="float-add-btn" bindtap="goAddItem">
+    +
+  </button>
 </view>

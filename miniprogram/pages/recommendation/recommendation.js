@@ -1,66 +1,55 @@
-// pages/recommendation/recommendation.js
+const recommendationService = require("/services/recommendationService.js");
+
 Page({
-
-  /**
-   * 页面的初始数据
-   */
   data: {
-
+    loading: false,
+    currentWardrobe: null,
+    weather: null,
+    outfits: [],
+    fallbackSuggestions: [],
+    decisionSteps: []
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad(options) {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
   onShow() {
-
+    this.loadRecommendation()
   },
 
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide() {
+  async loadRecommendation() {
+    try {
+      this.setData({ loading: true })
 
+      const result = await recommendationService.getTodayRecommendation()
+
+      this.setData({
+        currentWardrobe: result.wardrobe,
+        weather: result.weather,
+        outfits: result.outfits || [],
+        fallbackSuggestions: result.fallbackSuggestions || [],
+        decisionSteps: result.decisionSteps || []
+      })
+    } catch (err) {
+      wx.showToast({
+        title: err.message || '推荐加载失败',
+        icon: 'none'
+      })
+    } finally {
+      this.setData({ loading: false })
+    }
   },
 
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-
+  refreshRecommendation() {
+    this.loadRecommendation()
   },
 
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {
-
+  goAddItem() {
+    wx.navigateTo({
+      url: '/pages/add-item/add-item'
+    })
   },
 
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage() {
-
+  goWardrobes() {
+    wx.navigateTo({
+      url: '/pages/wardrobes/wardrobes'
+    })
   }
 })

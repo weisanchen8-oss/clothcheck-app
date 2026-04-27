@@ -1,2 +1,7 @@
-<!--pages/profile/profile.wxml-->
-<text>pages/profile/profile.wxml</text>
+<view class="page">
+  <view class="title">我的</view>
+  <view class="card">
+    <view class="card-title">AI Wardrobe Agent</view>
+    <view class="card-desc">个人设置、风格偏好和衣柜管理功能将在这里继续完善。</view>
+  </view>
+</view>
