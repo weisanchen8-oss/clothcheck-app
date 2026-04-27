@@ -1,0 +1,119 @@
+<view class="page">
+  <view class="header">
+    <view class="title">衣柜切换</view>
+    <view class="desc">为自己、家人或宠物建立独立衣柜。切换后，衣橱、添加衣物和推荐都会使用当前衣柜。</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+
+  <view wx:else>
+    <view class="list">
+      <view
+        wx:for="{{wardrobes}}"
+        wx:key="_id"
+        class="wardrobe-card {{currentWardrobeId === item._id ? 'active' : ''}}"
+      >
+        <view class="card-main" bindtap="onSwitchWardrobe" data-id="{{item._id}}">
+          <view class="avatar">
+            {{item.type === 'pet' ? '🐾' : '👤'}}
+          </view>
+
+          <view class="info">
+            <view class="name-row">
+              <text class="name">{{item.name}}</text>
+              <text wx:if="{{item.isDefault}}" class="tag">默认</text>
+              <text wx:if="{{currentWardrobeId === item._id}}" class="current-tag">当前</text>
+            </view>
+
+            <view class="meta">
+              {{item.type === 'pet' ? '宠物衣柜' : '人类衣柜'}} · {{item.ownerName || '未设置'}}
+            </view>
+          </view>
+        </view>
+
+        <view class="actions">
+          <button
+            size="mini"
+            class="small-btn"
+            data-id="{{item._id}}"
+            bindtap="onSwitchWardrobe"
+          >
+            切换
+          </button>
+
+          <button
+            size="mini"
+            class="small-btn secondary"
+            data-id="{{item._id}}"
+            bindtap="onSetDefault"
+          >
+            设默认
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <button class="add-btn" bindtap="openForm">+ 新增衣柜</button>
+  </view>
+
+  <view wx:if="{{showForm}}" class="mask">
+    <view class="form-panel">
+      <view class="form-title">新增衣柜</view>
+
+      <view class="form-item">
+        <view class="label">衣柜名称</view>
+        <input
+          class="input"
+          placeholder="例如：我的衣柜 / 妈妈的衣柜 / 猫猫衣柜"
+          value="{{form.name}}"
+          bindinput="onInputName"
+        />
+      </view>
+
+      <view class="form-item">
+        <view class="label">所属对象名称</view>
+        <input
+          class="input"
+          placeholder="例如：我 / 妈妈 / 小猫"
+          value="{{form.ownerName}}"
+          bindinput="onInputOwnerName"
+        />
+      </view>
+
+      <view class="form-item">
+        <view class="label">衣柜类型</view>
+        <radio-group bindchange="onTypeChange">
+          <label class="radio">
+            <radio value="human" checked="{{form.type === 'human'}}" />人类
+          </label>
+          <label class="radio">
+            <radio value="pet" checked="{{form.type === 'pet'}}" />宠物
+          </label>
+        </radio-group>
+      </view>
+
+      <view class="form-item">
+        <view class="label">所属关系</view>
+        <radio-group bindchange="onOwnerRoleChange">
+          <label class="radio">
+            <radio value="self" checked="{{form.ownerRole === 'self'}}" />自己
+          </label>
+          <label class="radio">
+            <radio value="family" checked="{{form.ownerRole === 'family'}}" />家人
+          </label>
+          <label class="radio">
+            <radio value="pet" checked="{{form.ownerRole === 'pet'}}" />宠物
+          </label>
+          <label class="radio">
+            <radio value="other" checked="{{form.ownerRole === 'other'}}" />其他
+          </label>
+        </radio-group>
+      </view>
+
+      <view class="form-actions">
+        <button class="cancel-btn" bindtap="closeForm">取消</button>
+        <button class="submit-btn" bindtap="onCreateWardrobe">保存</button>
+      </view>
+    </view>
+  </view>
+</view>
