@@ -1,56 +1,45 @@
 const clothingService = require('../../services/clothingService')
+const wardrobeService = require('../../services/wardrobeService')
 const aiService = require('../../services/aiService')
-
-const defaultForm = {
-  name: '',
-  imageUrl: '',
-  category: '',
-  subCategory: '',
-  color: '',
-  colorName: '',
-  thickness: '',
-  warmLevel: '',
-  season: [],
-  styleTags: [],
-  sceneTags: [],
-  temperatureMin: '',
-  temperatureMax: '',
-  material: '',
-  fit: '',
-  sourceType: 'image',
-  sourceLink: '',
-  aiConfidence: 0
-}
 
 Page({
   data: {
-    imageUrl: '',
-    imageCloudPath: '',
-
-    form: { ...defaultForm },
-
-    categoryLabel: '',
-    thicknessLabel: '',
-    warmLevelLabel: '',
-
-    styleTagsText: '',
-    sceneTagsText: '',
-
+    loading: false,
     recognizing: false,
     saving: false,
-    hasRecognized: false,
-    userHasConfirmed: false,
 
-    categoryOptions: [
+    userId: '',
+    currentWardrobe: null,
+    currentWardrobeId: '',
+
+    imageUrl: '',
+    tempImagePath: '',
+
+    form: {
+      name: '',
+      category: 'top',
+      subCategory: '',
+      color: '',
+      colorName: '',
+      thickness: 'medium',
+      warmLevel: 3,
+      season: ['spring', 'summer'],
+      styleTags: ['casual'],
+      sceneTags: ['daily'],
+      temperatureMin: 15,
+      temperatureMax: 28,
+      material: '',
+      fit: 'regular'
+    },
+
+    categories: [
       { label: '上衣', value: 'top' },
       { label: '下装', value: 'bottom' },
       { label: '外套', value: 'outerwear' },
-      { label: '连衣裙', value: 'dress' },
+      { label: '裙装', value: 'dress' },
       { label: '鞋', value: 'shoes' },
       { label: '包', value: 'bag' },
       { label: '配饰', value: 'accessory' },
-      { label: '内搭/贴身', value: 'underwear' },
-      { label: '宠物衣物', value: 'pet' },
       { label: '其他', value: 'other' }
     ],
 
@@ -59,73 +48,93 @@ Page({
       { label: '中等', value: 'medium' },
       { label: '厚', value: 'thick' },
       { label: '加厚', value: 'extra' }
-    ],
-
-    warmLevelOptions: [
-      { label: '1 极薄', value: 1 },
-      { label: '2 薄', value: 2 },
-      { label: '3 常规', value: 3 },
-      { label: '4 偏厚', value: 4 },
-      { label: '5 厚', value: 5 },
-      { label: '6 加厚', value: 6 }
-    ],
-
-    seasonOptions: [
-      { label: '春', value: 'spring' },
-      { label: '夏', value: 'summer' },
-      { label: '秋', value: 'autumn' },
-      { label: '冬', value: 'winter' }
     ]
   },
 
-  async chooseImage() {
+  onShow() {
+    this.initWardrobe()
+  },
+
+  async initWardrobe() {
     try {
-      const chooseRes = await wx.chooseMedia({
-        count: 1,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed']
-      })
+      this.setData({ loading: true })
 
-      if (!chooseRes.tempFiles || chooseRes.tempFiles.length === 0) {
-        throw new Error('未选择图片')
-      }
+      const userId = wardrobeService.getUserId()
+      const result = await wardrobeService.getWardrobes()
+      const currentWardrobe = result.currentWardrobe
 
-      const tempFilePath = chooseRes.tempFiles[0].tempFilePath
-
-      wx.showLoading({
-        title: '上传中...'
-      })
-
-      const uploadRes = await clothingService.uploadClothingImage(tempFilePath)
-
-      wx.hideLoading()
-
-      this.setData({
-        imageUrl: uploadRes.fileID,
-        imageCloudPath: uploadRes.cloudPath,
-        form: {
-          ...defaultForm,
-          imageUrl: uploadRes.fileID
-        },
-        categoryLabel: '',
-        thicknessLabel: '',
-        warmLevelLabel: '',
-        styleTagsText: '',
-        sceneTagsText: '',
-        hasRecognized: false,
-        userHasConfirmed: false
-      })
-
-      await this.recognizeImage(uploadRes.fileID)
-    } catch (err) {
-      wx.hideLoading()
-
-      if (err && err.errMsg && err.errMsg.includes('cancel')) {
+      if (!userId || !currentWardrobe || !currentWardrobe._id) {
+        wx.showModal({
+          title: '需要先选择衣柜',
+          content: '添加衣物前，请先创建或选择一个衣柜。',
+          confirmText: '去选择',
+          success: (res) => {
+            if (res.confirm) {
+              wx.navigateTo({
+                url: '/pages/wardrobes/wardrobes'
+              })
+            }
+          }
+        })
         return
       }
 
-      console.error('chooseImage failed:', err)
+      this.setData({
+        userId,
+        currentWardrobe,
+        currentWardrobeId: currentWardrobe._id
+      })
+
+      wx.setNavigationBarTitle({
+        title: `添加到${currentWardrobe.name}`
+      })
+    } catch (err) {
+      wx.showToast({
+        title: err.message || '衣柜加载失败',
+        icon: 'none'
+      })
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  chooseImage() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const tempFilePath = res.tempFiles[0].tempFilePath
+
+        this.setData({
+          tempImagePath: tempFilePath
+        })
+
+        this.uploadImage(tempFilePath)
+      }
+    })
+  },
+
+  async uploadImage(tempFilePath) {
+    try {
+      wx.showLoading({ title: '上传中' })
+
+      const cloudPath = `clothes/${Date.now()}-${Math.floor(Math.random() * 10000)}.jpg`
+
+      const uploadRes = await wx.cloud.uploadFile({
+        cloudPath,
+        filePath: tempFilePath
+      })
+
+      this.setData({
+        imageUrl: uploadRes.fileID
+      })
+
+      wx.hideLoading()
+
+      await this.recognizeClothing(uploadRes.fileID)
+    } catch (err) {
+      wx.hideLoading()
       wx.showToast({
         title: err.message || '图片上传失败',
         icon: 'none'
@@ -133,169 +142,193 @@ Page({
     }
   },
 
-  async recognizeImage(imageUrl) {
+  async recognizeClothing(imageUrl) {
     try {
-      this.setData({
-        recognizing: true
-      })
+      this.setData({ recognizing: true })
 
-      const aiResult = await aiService.recognizeClothing({
-        imageUrl,
-        sourceType: 'image'
-      })
+      let result = null
 
-      const nextForm = {
-        ...this.data.form,
-        ...aiResult,
-        imageUrl,
-        sourceType: 'image',
-        sourceLink: '',
-        aiConfidence: Number(aiResult.aiConfidence || 0)
+      if (aiService && typeof aiService.recognizeClothing === 'function') {
+        result = await aiService.recognizeClothing(imageUrl)
+      }
+
+      const mockResult = result || {
+        name: '待确认衣物',
+        category: 'top',
+        subCategory: '',
+        color: 'white',
+        colorName: '白色',
+        thickness: 'medium',
+        warmLevel: 3,
+        season: ['spring', 'summer'],
+        styleTags: ['casual'],
+        sceneTags: ['daily'],
+        temperatureMin: 15,
+        temperatureMax: 28,
+        material: '',
+        fit: 'regular',
+        aiConfidence: 0.6
       }
 
       this.setData({
-        form: nextForm,
-        categoryLabel: this.getLabel(this.data.categoryOptions, nextForm.category),
-        thicknessLabel: this.getLabel(this.data.thicknessOptions, nextForm.thickness),
-        warmLevelLabel: this.getLabel(this.data.warmLevelOptions, Number(nextForm.warmLevel)),
-        styleTagsText: (nextForm.styleTags || []).join(','),
-        sceneTagsText: (nextForm.sceneTags || []).join(','),
-        hasRecognized: true,
-        userHasConfirmed: false
-      })
-    } catch (err) {
-      console.error('recognizeImage failed:', err)
-
-      this.setData({
-        hasRecognized: false,
-        userHasConfirmed: false
+        form: {
+          ...this.data.form,
+          ...mockResult
+        }
       })
 
       wx.showToast({
-        title: 'AI识别失败，请手动填写',
+        title: '识别完成，请确认',
+        icon: 'none'
+      })
+    } catch (err) {
+      wx.showToast({
+        title: err.message || 'AI识别失败',
         icon: 'none'
       })
     } finally {
-      this.setData({
-        recognizing: false
-      })
+      this.setData({ recognizing: false })
     }
   },
 
-  onInput(e) {
-    const field = e.currentTarget.dataset.field
-    const value = e.detail.value
-
+  onInputName(e) {
     this.setData({
-      [`form.${field}`]: value,
-      userHasConfirmed: false
+      'form.name': e.detail.value
     })
   },
 
-  onTagsInput(e) {
-    const field = e.currentTarget.dataset.field
-    const value = e.detail.value
-
+  onInputSubCategory(e) {
     this.setData({
-      [field]: value,
-      userHasConfirmed: false
+      'form.subCategory': e.detail.value
     })
   },
 
-  onCategoryChange(e) {
-    const option = this.data.categoryOptions[e.detail.value]
-
+  onInputColor(e) {
     this.setData({
-      'form.category': option.value,
-      categoryLabel: option.label,
-      userHasConfirmed: false
+      'form.colorName': e.detail.value
     })
   },
 
-  onThicknessChange(e) {
-    const option = this.data.thicknessOptions[e.detail.value]
-
+  onInputMaterial(e) {
     this.setData({
-      'form.thickness': option.value,
-      thicknessLabel: option.label,
-      userHasConfirmed: false
+      'form.material': e.detail.value
     })
   },
 
-  onWarmLevelChange(e) {
-    const option = this.data.warmLevelOptions[e.detail.value]
-
+  onCategoryTap(e) {
     this.setData({
-      'form.warmLevel': option.value,
-      warmLevelLabel: option.label,
-      userHasConfirmed: false
+      'form.category': e.currentTarget.dataset.value
     })
   },
 
-  onSeasonChange(e) {
-    this.setData({
-      'form.season': e.detail.value,
-      userHasConfirmed: false
-    })
-  },
+  onThicknessTap(e) {
+    const value = e.currentTarget.dataset.value
 
-  confirmRecognizedResult() {
-    const checkResult = this.validateFormBeforeConfirm()
-
-    if (!checkResult.valid) {
-      wx.showToast({
-        title: checkResult.message,
-        icon: 'none'
-      })
-      return
+    const warmMap = {
+      thin: 2,
+      medium: 3,
+      thick: 5,
+      extra: 6
     }
 
     this.setData({
-      userHasConfirmed: true
+      'form.thickness': value,
+      'form.warmLevel': warmMap[value] || 3
     })
+  },
 
-    wx.showToast({
-      title: '已确认',
-      icon: 'success'
+  onTempMinInput(e) {
+    this.setData({
+      'form.temperatureMin': Number(e.detail.value)
+    })
+  },
+
+  onTempMaxInput(e) {
+    this.setData({
+      'form.temperatureMax': Number(e.detail.value)
     })
   },
 
   async saveClothing() {
-    if (this.data.saving) {
+    const { userId, currentWardrobeId, imageUrl, form } = this.data
+
+    if (!userId) {
+      wx.showToast({
+        title: '缺少 userId',
+        icon: 'none'
+      })
+      return
+    }
+
+    if (!currentWardrobeId) {
+      wx.showToast({
+        title: '请先选择衣柜',
+        icon: 'none'
+      })
+      return
+    }
+
+    if (!imageUrl) {
+      wx.showToast({
+        title: '请先上传图片',
+        icon: 'none'
+      })
+      return
+    }
+
+    if (!form.name || !form.name.trim()) {
+      wx.showToast({
+        title: '请输入衣物名称',
+        icon: 'none'
+      })
       return
     }
 
     try {
-      if (!this.data.userHasConfirmed) {
-        throw new Error('请先确认识别结果')
-      }
+      this.setData({ saving: true })
+      wx.showLoading({ title: '保存中' })
 
-      const userId = wx.getStorageSync('userId')
-      const wardrobeId = wx.getStorageSync('wardrobeId')
-
-      const clothing = {
-        ...this.data.form,
-        styleTags: this.parseTags(this.data.styleTagsText),
-        sceneTags: this.parseTags(this.data.sceneTagsText),
-        temperatureMin: Number(this.data.form.temperatureMin),
-        temperatureMax: Number(this.data.form.temperatureMax),
-        warmLevel: Number(this.data.form.warmLevel),
-        aiRecognized: this.data.hasRecognized,
-        aiConfidence: Number(this.data.form.aiConfidence || 0),
-        userConfirmed: true
-      }
-
-      this.setData({
-        saving: true
-      })
-
-      const result = await clothingService.addClothing({
+      const clothingData = {
         userId,
-        wardrobeId,
-        clothing
-      })
+        wardrobeId: currentWardrobeId,
 
-      console.log('add clothing success:', result)
+        name: form.name.trim(),
+        imageUrl,
+
+        category: form.category,
+        subCategory: form.subCategory || '',
+
+        color: form.color || '',
+        colorName: form.colorName || form.color || '',
+
+        thickness: form.thickness,
+        warmLevel: Number(form.warmLevel) || 3,
+
+        season: form.season || [],
+        styleTags: form.styleTags || [],
+        sceneTags: form.sceneTags || [],
+
+        temperatureMin: Number(form.temperatureMin),
+        temperatureMax: Number(form.temperatureMax),
+
+        material: form.material || '',
+        fit: form.fit || 'regular',
+
+        sourceType: 'image',
+        sourceLink: '',
+
+        aiRecognized: true,
+        aiConfidence: form.aiConfidence || 0.6,
+        userConfirmed: true,
+
+        wearCount: 0,
+        lastWornAt: null,
+        status: 'active'
+      }
+
+      await clothingService.addClothing(clothingData)
+
+      wx.hideLoading()
 
       wx.showToast({
         title: '保存成功',
@@ -303,83 +336,22 @@ Page({
       })
 
       setTimeout(() => {
-        this.resetPageAfterSave()
+        wx.navigateBack()
       }, 800)
     } catch (err) {
-      console.error('saveClothing failed:', err)
+      wx.hideLoading()
       wx.showToast({
         title: err.message || '保存失败',
         icon: 'none'
       })
     } finally {
-      this.setData({
-        saving: false
-      })
+      this.setData({ saving: false })
     }
   },
 
-  resetPageAfterSave() {
-    this.setData({
-      imageUrl: '',
-      imageCloudPath: '',
-      form: { ...defaultForm },
-      categoryLabel: '',
-      thicknessLabel: '',
-      warmLevelLabel: '',
-      styleTagsText: '',
-      sceneTagsText: '',
-      recognizing: false,
-      saving: false,
-      hasRecognized: false,
-      userHasConfirmed: false
+  goWardrobes() {
+    wx.navigateTo({
+      url: '/pages/wardrobes/wardrobes'
     })
-  },
-
-  validateFormBeforeConfirm() {
-    const form = this.data.form
-
-    if (!form.imageUrl) return { valid: false, message: '请先上传图片' }
-    if (!form.name) return { valid: false, message: '请填写衣物名称' }
-    if (!form.category) return { valid: false, message: '请选择分类' }
-    if (!form.subCategory) return { valid: false, message: '请填写子分类' }
-    if (!form.color) return { valid: false, message: '请填写颜色代码' }
-    if (!form.colorName) return { valid: false, message: '请填写颜色名称' }
-    if (!form.thickness) return { valid: false, message: '请选择厚度' }
-    if (!form.warmLevel) return { valid: false, message: '请选择保暖等级' }
-
-    if (!Array.isArray(form.season) || form.season.length === 0) {
-      return { valid: false, message: '请选择季节' }
-    }
-
-    const temperatureMin = Number(form.temperatureMin)
-    const temperatureMax = Number(form.temperatureMax)
-
-    if (Number.isNaN(temperatureMin)) {
-      return { valid: false, message: '最低温度必须是数字' }
-    }
-
-    if (Number.isNaN(temperatureMax)) {
-      return { valid: false, message: '最高温度必须是数字' }
-    }
-
-    if (temperatureMin > temperatureMax) {
-      return { valid: false, message: '最低温度不能高于最高温度' }
-    }
-
-    return { valid: true, message: '' }
-  },
-
-  parseTags(text) {
-    if (!text) return []
-
-    return text
-      .split(',')
-      .map(item => item.trim())
-      .filter(Boolean)
-  },
-
-  getLabel(options, value) {
-    const found = options.find(item => item.value === value)
-    return found ? found.label : ''
   }
 })

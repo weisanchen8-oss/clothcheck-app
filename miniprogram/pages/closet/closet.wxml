@@ -1,71 +1,65 @@
 <view class="page">
+  <view class="wardrobe-card">
+    <view class="wardrobe-main">
+      <view class="wardrobe-avatar">
+        {{currentWardrobe.type === 'pet' ? '🐾' : '👕'}}
+      </view>
 
-<view class="header">
-  <view class="title">我的衣橱</view>
-  <view class="subtitle">查看当前衣柜下已录入的衣物</view>
-</view>
+      <view class="wardrobe-text">
+        <view class="title">{{currentWardrobe.name || '我的衣橱'}}</view>
+        <view class="subtitle">
+          {{currentWardrobe.type === 'pet' ? '宠物衣柜' : '日常衣柜'}} · 查看已录入衣物
+        </view>
+      </view>
 
-<scroll-view class="category-scroll" scroll-x="true">
-  <view class="category-row">
+      <button class="switch-btn" bindtap="goWardrobes">切换</button>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">衣物分类</view>
+
+    <scroll-view class="category-scroll" scroll-x="true" show-scrollbar="false">
+      <view class="category-list">
+        <view
+          wx:for="{{categories}}"
+          wx:key="value"
+          class="category-item {{currentCategory === item.value ? 'active' : ''}}"
+          data-category="{{item.value}}"
+          bindtap="onCategoryTap"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view wx:if="{{loading}}" class="empty-card">
+    <view class="empty-title">正在加载衣物...</view>
+  </view>
+
+  <view wx:elif="{{filteredClothes.length === 0}}" class="empty-card">
+    <view class="empty-icon">👚</view>
+    <view class="empty-title">{{currentWardrobe.name || '当前衣柜'}}暂无衣物</view>
+    <view class="empty-desc">可以先为这个衣柜添加一件衣物</view>
+    <button class="empty-btn" bindtap="goAddItem">添加衣物</button>
+  </view>
+
+  <view wx:else class="clothes-grid">
     <view
-      wx:for="{{categories}}"
-      wx:key="value"
-      class="category-item {{currentCategory === item.value ? 'category-active' : ''}}"
-      data-category="{{item.value}}"
-      bindtap="onCategoryTap"
+      wx:for="{{filteredClothes}}"
+      wx:key="_id"
+      class="clothing-card"
+      data-id="{{item._id}}"
+      bindtap="onClothingTap"
     >
-      {{item.label}}
-    </view>
-  </view>
-</scroll-view>
-
-<view wx:if="{{loading}}" class="state-box">
-  <text>正在读取衣物...</text>
-</view>
-
-<view wx:elif="{{errorMessage}}" class="state-box error">
-  <text>{{errorMessage}}</text>
-</view>
-
-<view wx:elif="{{clothes.length === 0}}" class="empty-box">
-  <view class="empty-title">当前分类暂无衣物</view>
-  <view class="empty-desc">可以先去添加一件衣物</view>
-  <button class="empty-button" bindtap="onAddTap">添加衣物</button>
-</view>
-
-<view wx:else class="grid">
-  <view
-    wx:for="{{clothes}}"
-    wx:key="_id"
-    class="card"
-    data-id="{{item._id}}"
-    bindtap="onItemTap"
-  >
-    <image
-      class="card-image"
-      src="{{item.imageUrl}}"
-      mode="aspectFill"
-    />
-
-    <view class="card-body">
-      <view class="card-name">
-        {{item.name || '未命名衣物'}}
-      </view>
-
-      <view class="card-meta">
-        {{item.colorName || item.color || '未知颜色'}} · {{item.subCategory || item.category || '未分类'}}
-      </view>
-
-      <view class="tag-row">
-        <text class="tag">{{item.thickness || '厚度未知'}}</text>
-        <text class="tag">保暖 {{item.warmLevel || '-' }}</text>
+      <image class="clothing-image" src="{{item.imageUrl}}" mode="aspectFill"></image>
+      <view class="clothing-info">
+        <view class="clothing-name">{{item.name}}</view>
+        <view class="clothing-meta">{{item.colorName || item.color}} · {{item.thickness}}</view>
       </view>
     </view>
   </view>
-</view>
 
-<view class="float-button" bindtap="onAddTap">
-  +
-</view>
-
+  <button class="float-add-btn" bindtap="goAddItem">+</button>
 </view>
