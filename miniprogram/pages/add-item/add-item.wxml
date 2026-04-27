@@ -1,0 +1,206 @@
+<view class="page">
+
+<view class="upload-card" bindtap="chooseImage">
+  <image
+    wx:if="{{imageUrl}}"
+    class="preview-image"
+    src="{{imageUrl}}"
+    mode="aspectFill"
+  />
+
+  <view wx:else class="upload-placeholder">
+    <view class="upload-icon">＋</view>
+    <view class="upload-text">上传衣物图片</view>
+    <view class="upload-subtext">支持拍照或从相册选择</view>
+  </view>
+</view>
+
+<view wx:if="{{recognizing}}" class="status-card">
+  AI 正在识别衣物信息...
+</view>
+
+<view wx:if="{{hasRecognized}}" class="ai-tip">
+  AI 已完成预填写，请检查并点击“确认识别结果”后再保存。
+</view>
+
+<view wx:if="{{userHasConfirmed}}" class="confirm-tip">
+  你已确认当前衣物信息，可以保存。
+</view>
+
+<view class="form-card">
+  <view class="form-item">
+    <text class="label">衣物名称 *</text>
+    <input
+      value="{{form.name}}"
+      data-field="name"
+      bindinput="onInput"
+      placeholder="例如：白色衬衫"
+    />
+  </view>
+
+  <view class="form-item">
+    <text class="label">分类 *</text>
+    <picker
+      mode="selector"
+      range="{{categoryOptions}}"
+      range-key="label"
+      bindchange="onCategoryChange"
+    >
+      <view class="picker">{{categoryLabel || '请选择分类'}}</view>
+    </picker>
+  </view>
+
+  <view class="form-item">
+    <text class="label">子分类 *</text>
+    <input
+      value="{{form.subCategory}}"
+      data-field="subCategory"
+      bindinput="onInput"
+      placeholder="例如：shirt"
+    />
+  </view>
+
+  <view class="form-item">
+    <text class="label">颜色名称 *</text>
+    <input
+      value="{{form.colorName}}"
+      data-field="colorName"
+      bindinput="onInput"
+      placeholder="例如：白色"
+    />
+  </view>
+
+  <view class="form-item">
+    <text class="label">颜色代码 *</text>
+    <input
+      value="{{form.color}}"
+      data-field="color"
+      bindinput="onInput"
+      placeholder="例如：white"
+    />
+  </view>
+
+  <view class="form-item">
+    <text class="label">厚度 *</text>
+    <picker
+      mode="selector"
+      range="{{thicknessOptions}}"
+      range-key="label"
+      bindchange="onThicknessChange"
+    >
+      <view class="picker">{{thicknessLabel || '请选择厚度'}}</view>
+    </picker>
+  </view>
+
+  <view class="form-item">
+    <text class="label">保暖等级 *</text>
+    <picker
+      mode="selector"
+      range="{{warmLevelOptions}}"
+      range-key="label"
+      bindchange="onWarmLevelChange"
+    >
+      <view class="picker">{{warmLevelLabel || '请选择保暖等级'}}</view>
+    </picker>
+  </view>
+
+  <view class="form-item">
+    <text class="label">季节 *</text>
+    <checkbox-group bindchange="onSeasonChange">
+      <label wx:for="{{seasonOptions}}" wx:key="value" class="checkbox-item">
+        <checkbox
+          value="{{item.value}}"
+          checked="{{form.season.indexOf(item.value) !== -1}}"
+        />
+        {{item.label}}
+      </label>
+    </checkbox-group>
+  </view>
+
+  <view class="form-item">
+    <text class="label">风格标签</text>
+    <input
+      value="{{styleTagsText}}"
+      bindinput="onTagsInput"
+      data-field="styleTagsText"
+      placeholder="用英文逗号分隔，例如：minimal,commute"
+    />
+  </view>
+
+  <view class="form-item">
+    <text class="label">场景标签</text>
+    <input
+      value="{{sceneTagsText}}"
+      bindinput="onTagsInput"
+      data-field="sceneTagsText"
+      placeholder="例如：work,daily"
+    />
+  </view>
+
+  <view class="form-row">
+    <view class="form-item half">
+      <text class="label">最低温度 *</text>
+      <input
+        type="number"
+        value="{{form.temperatureMin}}"
+        data-field="temperatureMin"
+        bindinput="onInput"
+        placeholder="18"
+      />
+    </view>
+
+    <view class="form-item half">
+      <text class="label">最高温度 *</text>
+      <input
+        type="number"
+        value="{{form.temperatureMax}}"
+        data-field="temperatureMax"
+        bindinput="onInput"
+        placeholder="28"
+      />
+    </view>
+  </view>
+
+  <view class="form-item">
+    <text class="label">材质</text>
+    <input
+      value="{{form.material}}"
+      data-field="material"
+      bindinput="onInput"
+      placeholder="例如：cotton"
+    />
+  </view>
+
+  <view class="form-item">
+    <text class="label">版型</text>
+    <input
+      value="{{form.fit}}"
+      data-field="fit"
+      bindinput="onInput"
+      placeholder="例如：regular"
+    />
+  </view>
+
+  <view wx:if="{{hasRecognized}}" class="ai-meta">
+    <text>AI 识别置信度：{{form.aiConfidence}}</text>
+  </view>
+</view>
+
+<button
+  class="confirm-btn"
+  bindtap="confirmRecognizedResult"
+  disabled="{{recognizing || saving}}"
+>
+  确认识别结果
+</button>
+
+<button
+  class="save-btn"
+  bindtap="saveClothing"
+  loading="{{saving}}"
+  disabled="{{saving || recognizing}}"
+>
+  保存衣物
+</button>
+
+</view>

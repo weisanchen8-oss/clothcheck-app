@@ -1,0 +1,14 @@
+{
+  "pages": [
+    "pages/add-item/add-item"
+  ],
+  "window": {
+    "navigationBarTitleText": "智能衣橱",
+    "navigationBarBackgroundColor": "#f6f7f5",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f6f7f5"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}
