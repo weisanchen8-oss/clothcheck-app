@@ -1,55 +1,69 @@
-const recommendationService = require("/services/recommendationService.js");
+const wardrobeAgent = require("../../services/wardrobeAgent.js");
 
 Page({
   data: {
     loading: false,
-    currentWardrobe: null,
     weather: null,
+    answer: "",
     outfits: [],
     fallbackSuggestions: [],
-    decisionSteps: []
+    decisionSteps: [],
+    toolsUsed: [],
+    errorMessage: ""
+  },
+
+  onLoad() {
+    this.loadRecommendation();
   },
 
   onShow() {
-    this.loadRecommendation()
+    this.loadRecommendation();
   },
 
   async loadRecommendation() {
-    try {
-      this.setData({ loading: true })
+    this.setData({
+      loading: true,
+      errorMessage: ""
+    });
 
-      const result = await recommendationService.getTodayRecommendation()
+    try {
+      const result = await wardrobeAgent.runTodayRecommendation();
 
       this.setData({
-        currentWardrobe: result.wardrobe,
-        weather: result.weather,
+        weather: result.weather || null,
+        answer: result.answer || "",
         outfits: result.outfits || [],
         fallbackSuggestions: result.fallbackSuggestions || [],
-        decisionSteps: result.decisionSteps || []
-      })
+        decisionSteps: result.decisionSteps || [],
+        toolsUsed: result.toolsUsed || [],
+        errorMessage: result.success ? "" : result.errorMessage
+      });
     } catch (err) {
-      wx.showToast({
-        title: err.message || '推荐加载失败',
-        icon: 'none'
-      })
+      console.error("[recommendation] Agent 加载失败：", err);
+
+      this.setData({
+        errorMessage: err.message || "Agent 加载失败"
+      });
     } finally {
-      this.setData({ loading: false })
+      this.setData({
+        loading: false
+      });
     }
   },
 
-  refreshRecommendation() {
-    this.loadRecommendation()
+  handleRefresh() {
+    this.loadRecommendation();
+  },
+
+  goCloset() {
+    wx.switchTab({
+      url: "/pages/closet/closet"
+    });
   },
 
   goAddItem() {
     wx.navigateTo({
-      url: '/pages/add-item/add-item'
-    })
-  },
-
-  goWardrobes() {
-    wx.navigateTo({
-      url: '/pages/wardrobes/wardrobes'
-    })
+      url: "/pages/add-item/add-item"
+    });
   }
-})
+});

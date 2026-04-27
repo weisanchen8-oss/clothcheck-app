@@ -5,8 +5,26 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 });
 
-function isValidNumber(value) {
-  return typeof value === "number" && !Number.isNaN(value);
+function getFallbackWeather(reason) {
+  return {
+    success: true,
+    data: {
+      cityName: "默认天气",
+      latitude: null,
+      longitude: null,
+      temperature: 20,
+      tempMin: 16,
+      tempMax: 24,
+      weatherText: "天气获取失败",
+      weatherCode: -1,
+      humidity: 0,
+      windLevel: "-",
+      source: "fallback",
+      fallbackReason: reason || "天气接口请求失败",
+      updatedAt: new Date().toISOString()
+    },
+    errorMessage: ""
+  };
 }
 
 function getWeatherText(code) {
@@ -17,9 +35,6 @@ function getWeatherText(code) {
     3: "阴",
     45: "雾",
     48: "雾凇",
-    51: "小毛毛雨",
-    53: "中等毛毛雨",
-    55: "大毛毛雨",
     61: "小雨",
     63: "中雨",
     65: "大雨",
@@ -35,58 +50,47 @@ function getWeatherText(code) {
   return map[code] || "未知天气";
 }
 
-function httpsGetJson(url) {
+function httpsGetJson(url, timeoutMs = 1800) {
   return new Promise((resolve, reject) => {
-    https
-      .get(url, (res) => {
-        let rawData = "";
+    const req = https.get(url, (res) => {
+      let rawData = "";
 
-        res.on("data", (chunk) => {
-          rawData += chunk;
-        });
-
-        res.on("end", () => {
-          try {
-            const json = JSON.parse(rawData);
-            resolve(json);
-          } catch (err) {
-            reject(new Error("天气接口返回内容不是合法 JSON"));
-          }
-        });
-      })
-      .on("error", (err) => {
-        reject(err);
+      res.on("data", (chunk) => {
+        rawData += chunk;
       });
+
+      res.on("end", () => {
+        try {
+          resolve(JSON.parse(rawData));
+        } catch (err) {
+          reject(new Error("天气接口返回内容不是合法 JSON"));
+        }
+      });
+    });
+
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      reject(new Error("天气接口请求超时"));
+    });
+
+    req.on("error", reject);
   });
 }
 
 exports.main = async (event) => {
+  const latitude = Number(event.latitude);
+  const longitude = Number(event.longitude);
+  const cityName = event.cityName || "当前位置";
+
+  if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+    return getFallbackWeather("缺少有效定位信息");
+  }
+
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return getFallbackWeather("定位信息超出合法范围");
+  }
+
   try {
-    const latitude = Number(event.latitude);
-    const longitude = Number(event.longitude);
-    const cityName = event.cityName || "当前位置";
-
-    if (!isValidNumber(latitude) || !isValidNumber(longitude)) {
-      return {
-        success: false,
-        errorMessage: "缺少有效的 latitude 或 longitude"
-      };
-    }
-
-    if (latitude < -90 || latitude > 90) {
-      return {
-        success: false,
-        errorMessage: "latitude 超出合法范围"
-      };
-    }
-
-    if (longitude < -180 || longitude > 180) {
-      return {
-        success: false,
-        errorMessage: "longitude 超出合法范围"
-      };
-    }
-
     const url =
       "https://api.open-meteo.com/v1/forecast" +
       `?latitude=${latitude}` +
@@ -95,21 +99,11 @@ exports.main = async (event) => {
       "&daily=temperature_2m_max,temperature_2m_min" +
       "&timezone=auto";
 
-    const result = await httpsGetJson(url);
+    const result = await httpsGetJson(url, 1800);
 
     if (!result || !result.current || !result.daily) {
-      return {
-        success: false,
-        errorMessage: "天气接口返回数据不完整"
-      };
+      return getFallbackWeather("天气接口返回数据不完整");
     }
-
-    const temperature = Math.round(result.current.temperature_2m);
-    const tempMin = Math.round(result.daily.temperature_2m_min[0]);
-    const tempMax = Math.round(result.daily.temperature_2m_max[0]);
-    const humidity = result.current.relative_humidity_2m || 0;
-    const windSpeed = result.current.wind_speed_10m || 0;
-    const weatherCode = result.current.weather_code;
 
     return {
       success: true,
@@ -117,22 +111,19 @@ exports.main = async (event) => {
         cityName,
         latitude,
         longitude,
-        temperature,
-        tempMin,
-        tempMax,
-        weatherText: getWeatherText(weatherCode),
-        weatherCode,
-        humidity,
-        windLevel: `${Math.round(windSpeed)} km/h`,
+        temperature: Math.round(result.current.temperature_2m),
+        tempMin: Math.round(result.daily.temperature_2m_min[0]),
+        tempMax: Math.round(result.daily.temperature_2m_max[0]),
+        weatherText: getWeatherText(result.current.weather_code),
+        weatherCode: result.current.weather_code,
+        humidity: result.current.relative_humidity_2m || 0,
+        windLevel: `${Math.round(result.current.wind_speed_10m || 0)} km/h`,
         source: "open-meteo",
         updatedAt: new Date().toISOString()
       },
       errorMessage: ""
     };
   } catch (err) {
-    return {
-      success: false,
-      errorMessage: err.message || "获取天气失败"
-    };
+    return getFallbackWeather(err.message);
   }
 };

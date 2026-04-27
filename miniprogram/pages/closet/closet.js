@@ -120,7 +120,7 @@ Page({
   },
 
   goRecommendation() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/recommendation/recommendation'
     })
   },

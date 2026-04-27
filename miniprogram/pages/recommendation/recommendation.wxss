@@ -191,3 +191,52 @@
   color: #5f8f6a;
   border-radius: 999rpx;
 }
+
+.agent-card {
+  background: #ffffff;
+  border-radius: 28rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.04);
+}
+
+.agent-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #222;
+}
+
+.agent-answer {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #4f7356;
+}
+
+.agent-subtitle {
+  margin-top: 22rpx;
+  margin-bottom: 10rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #666;
+}
+
+.decision-step {
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: #666;
+}
+
+.tool-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.tool-tag {
+  padding: 8rpx 18rpx;
+  background: #eef5ec;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  color: #5f8f6a;
+}

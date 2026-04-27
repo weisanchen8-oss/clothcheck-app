@@ -1,8 +1,14 @@
 Page({
   goCloset() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/closet/closet'
     })
+  },
+
+  goRecommendation() {
+    wx.switchTab({
+      url: "/pages/recommendation/recommendation"
+    });
   },
 
   goAddItem() {

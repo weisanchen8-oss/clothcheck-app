@@ -28,6 +28,31 @@
     </view>
   </view>
 
+  <view wx:if="{{!loading && answer}}" class="agent-card">
+    <view class="agent-title">Agent 结论</view>
+    <view class="agent-answer">{{answer}}</view>
+
+    <view class="agent-subtitle">决策过程</view>
+    <view
+      wx:for="{{decisionSteps}}"
+      wx:key="*this"
+      class="decision-step"
+    >
+      {{index + 1}}. {{item}}
+    </view>
+
+    <view class="agent-subtitle">调用工具</view>
+    <view class="tool-list">
+      <text
+        wx:for="{{toolsUsed}}"
+        wx:key="*this"
+        class="tool-tag"
+      >
+        {{item}}
+      </text>
+    </view>
+  </view>
+
   <view wx:if="{{!loading && errorMessage}}" class="error-card">
     {{errorMessage}}
   </view>

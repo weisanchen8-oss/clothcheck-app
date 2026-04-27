@@ -4,16 +4,15 @@
     "pages/closet/closet",
     "pages/add-item/add-item",
     "pages/recommendation/recommendation",
-    "pages/profile/profile"
+    "pages/profile/profile",
+    "pages/wardrobes/wardrobes"
   ],
-
   "window": {
     "navigationBarTitleText": "AI Wardrobe",
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#f6f7f4"
   },
-
   "tabBar": {
     "color": "#888888",
     "selectedColor": "#5f8f6a",
@@ -38,14 +37,14 @@
       }
     ]
   },
-
   "permission": {
     "scope.userLocation": {
       "desc": "用于获取当前位置天气，并生成更准确的穿搭推荐"
     }
   },
-
+  "requiredPrivateInfos": [
+    "getLocation"
+  ],
   "style": "v2",
-
   "sitemapLocation": "sitemap.json"
 }
