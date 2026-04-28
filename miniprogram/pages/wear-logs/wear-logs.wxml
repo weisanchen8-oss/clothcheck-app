@@ -1,0 +1,175 @@
+<view class="page">
+  <view class="header">
+    <view class="header-text">
+      <view class="title">穿搭记录</view>
+      <view class="subtitle">点击记录查看反馈；每条穿搭记录只保留一条可修改反馈</view>
+    </view>
+
+    <view class="header-actions">
+      <button class="manage-btn" bindtap="toggleManageMode">
+        {{manageMode ? '完成' : '管理'}}
+      </button>
+    </view>
+  </view>
+
+  <view wx:if="{{manageMode}}" class="batch-bar">
+    <view class="batch-text">已选择 {{selectedIds.length}} 条</view>
+    <button class="batch-delete-btn" bindtap="handleBatchDelete">
+      批量删除
+    </button>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-card">
+    正在读取穿搭记录...
+  </view>
+
+  <view wx:if="{{!loading && wearLogs.length === 0}}" class="empty-card">
+    暂无穿搭记录
+    <view class="empty-tip">请先在推荐页点击“记录今天穿这套”。</view>
+  </view>
+
+  <block wx:for="{{wearLogs}}" wx:key="_id">
+    <view
+      class="log-card {{selectedWearLogId === item._id ? 'selected' : ''}} {{selectedIds.includes(item._id) ? 'checked' : ''}}"
+      data-index="{{index}}"
+      bindtap="handleSelectWearLog"
+    >
+      <view class="log-top">
+        <view class="log-main">
+          <view class="log-date">穿搭日期：{{item.date}}</view>
+          <view class="log-weather">
+            {{item.weatherSnapshot.temperature}}℃ · {{item.weatherSnapshot.weatherText}}
+          </view>
+        </view>
+
+        <view wx:if="{{manageMode}}" class="check-dot">
+          {{selectedIds.includes(item._id) ? '✓' : ''}}
+        </view>
+
+        <picker
+          wx:else
+          mode="date"
+          value="{{item.date}}"
+          data-index="{{index}}"
+          catchtap="stopTap"
+          bindchange="handleDateChange"
+        >
+          <view class="date-edit">修改日期</view>
+        </picker>
+      </view>
+
+      <view class="clothing-count">
+        共 {{item.clothingIds.length}} 件衣物
+      </view>
+
+      <view class="feedback-status {{item.feedback ? 'has-feedback' : ''}}">
+        {{item.feedback ? '已填写反馈' : '暂无反馈'}}
+      </view>
+
+      <view class="log-note" wx:if="{{item.note}}">
+        {{item.note}}
+      </view>
+
+      <view class="tap-tip" wx:if="{{!manageMode}}">
+        {{selectedWearLogId === item._id ? '已展开反馈信息' : '点击卡片查看反馈'}}
+      </view>
+    </view>
+
+    <view
+      wx:if="{{selectedWearLogId === item._id && !manageMode}}"
+      class="feedback-history-card inline-history-card"
+    >
+      <view class="history-header">
+        <view>
+          <view class="history-title">反馈情况</view>
+          <view class="history-subtitle">
+            {{item.date}} · {{item.weatherSnapshot.temperature}}℃
+          </view>
+        </view>
+
+        <button
+          class="small-add-btn"
+          data-index="{{index}}"
+          bindtap="handleOpenFeedbackEditor"
+        >
+          {{item.feedback ? '修改反馈' : '新增反馈'}}
+        </button>
+      </view>
+
+      <view wx:if="{{!item.feedback}}" class="no-feedback">
+        这条穿搭还没有反馈记录
+      </view>
+
+      <view wx:if="{{item.feedback}}" class="feedback-detail">
+        <view class="feedback-detail-title">当前反馈</view>
+
+        <view class="feedback-grid">
+          <view class="feedback-item">早上：{{item.feedback.morningFeedback}}</view>
+          <view class="feedback-item">中午：{{item.feedback.noonFeedback}}</view>
+          <view class="feedback-item">晚上：{{item.feedback.eveningFeedback}}</view>
+          <view class="feedback-item">穿脱：{{item.feedback.layeringFeedback}}</view>
+        </view>
+
+        <view class="feedback-adjustment">
+          体感修正值：{{item.feedback.temperatureAdjustment}}
+        </view>
+      </view>
+
+      <view wx:if="{{editingWearLog && editingWearLog._id === item._id}}" class="feedback-editor">
+        <view class="editor-title">
+          {{item.feedback ? '修改本次反馈' : '新增本次反馈'}}
+        </view>
+
+        <view class="feedback-row">
+          <view class="feedback-label">早上体感</view>
+          <view class="choice-row">
+            <button class="fb-btn {{feedbackForm.morningFeedback === 'cold' ? 'active' : ''}}" data-field="morningFeedback" data-value="cold" bindtap="handleSelectFeedback">冷</button>
+            <button class="fb-btn {{feedbackForm.morningFeedback === 'ok' ? 'active' : ''}}" data-field="morningFeedback" data-value="ok" bindtap="handleSelectFeedback">刚好</button>
+            <button class="fb-btn {{feedbackForm.morningFeedback === 'hot' ? 'active' : ''}}" data-field="morningFeedback" data-value="hot" bindtap="handleSelectFeedback">热</button>
+          </view>
+        </view>
+
+        <view class="feedback-row">
+          <view class="feedback-label">中午体感</view>
+          <view class="choice-row">
+            <button class="fb-btn {{feedbackForm.noonFeedback === 'cold' ? 'active' : ''}}" data-field="noonFeedback" data-value="cold" bindtap="handleSelectFeedback">冷</button>
+            <button class="fb-btn {{feedbackForm.noonFeedback === 'ok' ? 'active' : ''}}" data-field="noonFeedback" data-value="ok" bindtap="handleSelectFeedback">刚好</button>
+            <button class="fb-btn {{feedbackForm.noonFeedback === 'hot' ? 'active' : ''}}" data-field="noonFeedback" data-value="hot" bindtap="handleSelectFeedback">热</button>
+          </view>
+        </view>
+
+        <view class="feedback-row">
+          <view class="feedback-label">晚上体感</view>
+          <view class="choice-row">
+            <button class="fb-btn {{feedbackForm.eveningFeedback === 'cold' ? 'active' : ''}}" data-field="eveningFeedback" data-value="cold" bindtap="handleSelectFeedback">冷</button>
+            <button class="fb-btn {{feedbackForm.eveningFeedback === 'ok' ? 'active' : ''}}" data-field="eveningFeedback" data-value="ok" bindtap="handleSelectFeedback">刚好</button>
+            <button class="fb-btn {{feedbackForm.eveningFeedback === 'hot' ? 'active' : ''}}" data-field="eveningFeedback" data-value="hot" bindtap="handleSelectFeedback">热</button>
+          </view>
+        </view>
+
+        <view class="feedback-row">
+          <view class="feedback-label">穿脱体验</view>
+          <view class="choice-row">
+            <button class="fb-btn wide {{feedbackForm.layeringFeedback === 'need_layer' ? 'active' : ''}}" data-field="layeringFeedback" data-value="need_layer" bindtap="handleSelectFeedback">需要叠穿</button>
+            <button class="fb-btn wide {{feedbackForm.layeringFeedback === 'easy_remove' ? 'active' : ''}}" data-field="layeringFeedback" data-value="easy_remove" bindtap="handleSelectFeedback">方便穿脱</button>
+            <button class="fb-btn wide {{feedbackForm.layeringFeedback === 'ok' ? 'active' : ''}}" data-field="layeringFeedback" data-value="ok" bindtap="handleSelectFeedback">刚好</button>
+          </view>
+        </view>
+
+        <view class="editor-actions">
+          <button
+            class="submit-feedback-btn"
+            loading="{{submitting}}"
+            bindtap="handleSubmitFeedback"
+          >
+            保存反馈
+          </button>
+
+          <button class="cancel-feedback-btn" bindtap="handleCloseEditor">
+            取消
+          </button>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

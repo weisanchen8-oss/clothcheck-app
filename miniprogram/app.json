@@ -5,7 +5,8 @@
     "pages/add-item/add-item",
     "pages/recommendation/recommendation",
     "pages/profile/profile",
-    "pages/wardrobes/wardrobes"
+    "pages/wardrobes/wardrobes",
+    "pages/wear-logs/wear-logs"
   ],
   "window": {
     "navigationBarTitleText": "AI Wardrobe",
